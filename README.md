@@ -8,6 +8,14 @@ This is a JavaScript library for [escaping text for use in CSS strings or identi
 
 Feel free to fork if you see possible improvements!
 
+## Usage in browsers and Deno
+
+```js
+import { cssesc } from "https://code4fukui.github.io/cssesc/cssesc.js";
+
+console.log(cssesc("Ich ♥ Bücher"));
+```
+
 ## Installation
 
 Via [npm](https://www.npmjs.com/):

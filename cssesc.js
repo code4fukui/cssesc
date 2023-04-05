@@ -1,5 +1,4 @@
 /*! https://mths.be/cssesc v3.0.0 by @mathias */
-'use strict';
 
 var object = {};
 var hasOwnProperty = object.hasOwnProperty;
@@ -107,4 +106,4 @@ cssesc.options = {
 
 cssesc.version = '3.0.0';
 
-module.exports = cssesc;
+export { cssesc };
