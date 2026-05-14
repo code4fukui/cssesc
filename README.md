@@ -1,20 +1,19 @@
-# cssesc [![Build status](https://travis-ci.org/mathiasbynens/cssesc.svg?branch=master)](https://travis-ci.org/mathiasbynens/cssesc) [![Code coverage status](https://img.shields.io/codecov/c/github/mathiasbynens/cssesc.svg)](https://codecov.io/gh/mathiasbynens/cssesc)
+# cssesc
 
-A JavaScript library for escaping CSS strings and identifiers while generating the shortest possible ASCII-only output.
+> 日本語のREADMEはこちらです: [README.ja.md](README.ja.md)
 
-This is a JavaScript library for [escaping text for use in CSS strings or identifiers](https://mathiasbynens.be/notes/css-escapes) while generating the shortest possible valid ASCII-only output. [Here’s an online demo.](https://mothereff.in/css-escapes)
+A JavaScript library for escaping CSS strings and identifiers while generating the shortest possible ASCII-only output. [Homepage](https://mths.be/cssesc)
 
-[A polyfill for the CSSOM `CSS.escape()` method is available in a separate repository.](https://mths.be/cssescape) (In comparison, _cssesc_ is much more powerful.)
+Authored by [Mathias Bynens](https://mathiasbynens.be/).
 
-Feel free to fork if you see possible improvements!
+## Features
 
-## Usage in browsers and Deno
-
-```js
-import { cssesc } from "https://code4fukui.github.io/cssesc/cssesc.js";
-
-console.log(cssesc("Ich ♥ Bücher"));
-```
+*   Escapes strings and identifiers for safe use in CSS.
+*   Generates the shortest possible, valid ASCII-only output.
+*   Supports the full Unicode range, including astral symbols.
+*   Provides a robust command-line interface (CLI).
+*   Can be used as a polyfill for `CSS.escape()`.
+*   Highly configurable with options for quotes, wrapping, and more.
 
 ## Installation
 
@@ -24,186 +23,149 @@ Via [npm](https://www.npmjs.com/):
 npm install cssesc
 ```
 
-In a browser:
+## Usage
 
-```html
-<script src="cssesc.js"></script>
-```
-
-In [Node.js](https://nodejs.org/):
+### In Node.js
 
 ```js
 const cssesc = require('cssesc');
+
+// Escaping a string
+console.log(cssesc('Ich ♥ Bücher'));
+// → 'Ich \2665  B\FC cher'
+
+// Escaping an identifier
+console.log(cssesc('123', { 'isIdentifier': true }));
+// → '\31 23'
 ```
 
-In Ruby using [the `ruby-cssesc` wrapper gem](https://github.com/borodean/ruby-cssesc):
+### In Browsers and Deno (ES Module)
 
-```bash
-gem install ruby-cssesc
+```js
+import { cssesc } from "https://code4fukui.github.io/cssesc/cssesc.js";
+
+console.log(cssesc("Ich ♥ Bücher"));
+// → 'Ich \2665  B\FC cher'
 ```
 
-```ruby
-require 'ruby-cssesc'
-CSSEsc.escape('I ♥ Ruby', is_identifier: true)
-```
+### In a Browser (via `<script>` tag)
 
-In Sass using [`sassy-escape`](https://github.com/borodean/sassy-escape):
-
-```bash
-gem install sassy-escape
-```
-
-```scss
-body {
-  content: escape('I ♥ Sass', $is-identifier: true);
-}
+```html
+<script src="cssesc.js"></script>
+<script>
+  console.log(cssesc('Ich ♥ Bücher'));
+  // → 'Ich \2665  B\FC cher'
+</script>
 ```
 
 ## API
 
-### `cssesc(value, options)`
+### `cssesc(value, [options])`
 
-This function takes a value and returns an escaped version of the value where any characters that are not printable ASCII symbols are escaped using the shortest possible (but valid) [escape sequences for use in CSS strings or identifiers](https://mathiasbynens.be/notes/css-escapes).
+This function takes a string `value` and returns an escaped version. The optional `options` object allows for customization.
 
-```js
-cssesc('Ich ♥ Bücher');
-// → 'Ich \\2665  B\\FC cher'
+#### `options.isIdentifier`
 
-cssesc('foo 𝌆 bar');
-// → 'foo \\1D306  bar'
-```
+Type: `Boolean`
+Default: `false`
 
-By default, `cssesc` returns a string that can be used as part of a CSS string. If the target is a CSS identifier rather than a CSS string, use the `isIdentifier: true` setting (see below).
-
-The optional `options` argument accepts an object with the following options:
-
-#### `isIdentifier`
-
-The default value for the `isIdentifier` option is `false`. This means that the input text will be escaped for use in a CSS string literal. If you want to use the result as a CSS identifier instead (in a selector, for example), set this option to `true`.
+Set this to `true` to escape the input for use as a CSS identifier. Identifiers have stricter rules than strings (e.g., they cannot start with a digit).
 
 ```js
-cssesc('123a2b');
-// → '123a2b'
+cssesc('1a', { 'isIdentifier': true });
+// → '\31 a'
 
-cssesc('123a2b', {
-  'isIdentifier': true
-});
-// → '\\31 23a2b'
+cssesc('--foo', { 'isIdentifier': true });
+// → '\--foo'
 ```
 
-#### `quotes`
+#### `options.quotes`
 
-The default value for the `quotes` option is `'single'`. This means that any occurences of `'` in the input text will be escaped as `\'`, so that the output can be used in a CSS string literal wrapped in single quotes.
+Type: `String`
+Default: `'single'`
+Values: `'single'`, `'double'`
+
+Specifies the type of quotes to use when wrapping the output. This option is only used when `options.wrap` is `true`.
 
 ```js
-cssesc('Lorem ipsum "dolor" sit \'amet\' etc.');
-// → 'Lorem ipsum "dolor" sit \\\'amet\\\' etc.'
-// → "Lorem ipsum \"dolor\" sit \\'amet\\' etc."
+cssesc('foo "bar"', { 'wrap': true, 'quotes': 'double' });
+// → '"foo \\"bar\\""'
 
-cssesc('Lorem ipsum "dolor" sit \'amet\' etc.', {
-  'quotes': 'single'
-});
-// → 'Lorem ipsum "dolor" sit \\\'amet\\\' etc.'
-// → "Lorem ipsum \"dolor\" sit \\'amet\\' etc."
+cssesc("foo 'bar'", { 'wrap': true, 'quotes': 'single' });
+// → "'foo \\'bar\\''"
 ```
 
-If you want to use the output as part of a CSS string literal wrapped in double quotes, set the `quotes` option to `'double'`.
+#### `options.wrap`
+
+Type: `Boolean`
+Default: `false`
+
+Set this to `true` to wrap the output in quotes, creating a valid CSS string literal.
 
 ```js
-cssesc('Lorem ipsum "dolor" sit \'amet\' etc.', {
-  'quotes': 'double'
-});
-// → 'Lorem ipsum \\"dolor\\" sit \'amet\' etc.'
-// → "Lorem ipsum \\\"dolor\\\" sit 'amet' etc."
+cssesc('foo', { 'wrap': true });
+// → "'foo'"
 ```
 
-#### `wrap`
+#### `options.escapeEverything`
 
-The `wrap` option takes a boolean value (`true` or `false`), and defaults to `false` (disabled). When enabled, the output will be a valid CSS string literal wrapped in quotes. The type of quotes can be specified through the `quotes` setting.
+Type: `Boolean`
+Default: `false`
+
+Set this to `true` to escape all symbols in the output, including printable ASCII characters.
 
 ```js
-cssesc('Lorem ipsum "dolor" sit \'amet\' etc.', {
-  'quotes': 'single',
-  'wrap': true
-});
-// → '\'Lorem ipsum "dolor" sit \\\'amet\\\' etc.\''
-// → "\'Lorem ipsum \"dolor\" sit \\\'amet\\\' etc.\'"
-
-cssesc('Lorem ipsum "dolor" sit \'amet\' etc.', {
-  'quotes': 'double',
-  'wrap': true
-});
-// → '"Lorem ipsum \\"dolor\\" sit \'amet\' etc."'
-// → "\"Lorem ipsum \\\"dolor\\\" sit \'amet\' etc.\""
+cssesc('foo', { 'escapeEverything': true });
+// → '\66\6F\6F'
 ```
 
-#### `escapeEverything`
+## Command-Line Interface (CLI)
 
-The `escapeEverything` option takes a boolean value (`true` or `false`), and defaults to `false` (disabled). When enabled, all the symbols in the output will be escaped, even printable ASCII symbols.
-
-```js
-cssesc('lolwat"foo\'bar', {
-  'escapeEverything': true
-});
-// → '\\6C\\6F\\6C\\77\\61\\74\\"\\66\\6F\\6F\\\'\\62\\61\\72'
-// → "\\6C\\6F\\6C\\77\\61\\74\\\"\\66\\6F\\6F\\'\\62\\61\\72"
-```
-
-#### Overriding the default options globally
-
-The global default settings can be overridden by modifying the `css.options` object. This saves you from passing in an `options` object for every call to `encode` if you want to use the non-default setting.
-
-```js
-// Read the global default setting for `escapeEverything`:
-cssesc.options.escapeEverything;
-// → `false` by default
-
-// Override the global default setting for `escapeEverything`:
-cssesc.options.escapeEverything = true;
-
-// Using the global default setting for `escapeEverything`, which is now `true`:
-cssesc('foo © bar ≠ baz 𝌆 qux');
-// → '\\66\\6F\\6F\\ \\A9\\ \\62\\61\\72\\ \\2260\\ \\62\\61\\7A\\ \\1D306\\ \\71\\75\\78'
-```
-
-### `cssesc.version`
-
-A string representing the semantic version number.
-
-### Using the `cssesc` binary
-
-To use the `cssesc` binary in your shell, simply install cssesc globally using npm:
+Install `cssesc` globally to use the CLI:
 
 ```bash
 npm install -g cssesc
 ```
 
-After that you will be able to escape text for use in CSS strings or identifiers from the command line:
+### Usage
 
 ```bash
-$ cssesc 'föo ♥ bår 𝌆 baz'
-f\F6o \2665  b\E5r \1D306  baz
+cssesc [options] <string>
 ```
 
-If the output needs to be a CSS identifier rather than part of a string literal, use the `-i`/`--identifier` option:
+The string can also be piped from `stdin`.
+
+### Options
+
+*   `-i`, `--identifier`: Escape as a CSS identifier.
+*   `-s`, `--single-quotes`: Use single quotes.
+*   `-d`, `--double-quotes`: Use double quotes.
+*   `-w`, `--wrap`: Wrap the output in quotes.
+*   `-e`, `--escape-everything`: Escape all symbols.
+*   `-v`, `--version`: Print the version number.
+*   `-h`, `--help`: Show the help screen.
+
+### Examples
 
 ```bash
-$ cssesc --identifier 'föo ♥ bår 𝌆 baz'
-f\F6o\ \2665\ b\E5r\ \1D306\ baz
+$ cssesc 'fóo bår'
+f\F3 o b\E5 r
+
+$ cssesc --identifier '1a'
+\31 a
+
+$ cssesc --wrap --double-quotes 'fóo "bår"'
+"f\F3 o \"b\E5 r\""
+
+$ echo 'fóo bår' | cssesc
+f\F3 o b\E5 r
 ```
 
-See `cssesc --help` for the full list of options.
+## Integrations
 
-## Support
-
-This library supports the Node.js and browser versions mentioned in [`.babelrc`](https://github.com/mathiasbynens/cssesc/blob/master/.babelrc). For a version that supports a wider variety of legacy browsers and environments out-of-the-box, [see v0.1.0](https://github.com/mathiasbynens/cssesc/releases/tag/v0.1.0).
-
-## Author
-
-| [![twitter/mathias](https://gravatar.com/avatar/24e08a9ea84deb17ae121074d0f17125?s=70)](https://twitter.com/mathias "Follow @mathias on Twitter") |
-|---|
-| [Mathias Bynens](https://mathiasbynens.be/) |
+*   **Ruby:** Use via the [`ruby-cssesc`](https://github.com/mathiasbynens/ruby-cssesc) gem.
+*   **Sass:** Use via the [`sassy-escape`](https://github.com/mathiasbynens/sassy-escape) mixin.
 
 ## License
 
-This library is available under the [MIT](https://mths.be/mit) license.
+MIT © [Mathias Bynens](https://mathiasbynens.be/)
